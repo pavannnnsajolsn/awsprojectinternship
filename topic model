@@ -1,0 +1,21 @@
+import boto3
+from sagemaker.amazon.amazon_estimator import get_image_uri
+container = get_image_uri(boto3.Session().region_name, 'ntm')
+
+
+sess = sagemaker.Session()
+ntm = sagemaker.estimator.Estimator(container,
+                                    role, 
+                                    train_instance_count=2, 
+                                    train_instance_type='ml.c4.xlarge',
+                                    output_path=output_path,
+                                    sagemaker_session=sess)
+
+
+ntm.set_hyperparameters(num_topics=NUM_TOPICS, feature_dim=vocab_size, mini_batch_size=128, 
+                        epochs=100, num_patience_epochs=5, tolerance=0.001)
+
+from sagemaker.session import s3_input
+s3_train = s3_input(s3_train_data, distribution='ShardedByS3Key') 
+ntm.fit({'train': s3_train, 'test': s3_val_data})
+
